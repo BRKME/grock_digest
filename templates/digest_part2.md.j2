@@ -1,0 +1,25 @@
+📊 *Тренды по категориям \(24ч\)*
+
+💰 *Криптовалюта*
+{% for item in verticals.crypto %}
+*{{ loop.index }}\.* *{{ item.title | md2 }}* — {{ item.summary | md2 }}
+_{{ item.engagement_note | md2 }}_ · [src]({{ item.source_url }})
+{% endfor %}
+
+📈 *Фондовый рынок США*
+{% for item in verticals.stocks %}
+*{{ loop.index }}\.* *{{ item.title | md2 }}* — {{ item.summary | md2 }}
+_{{ item.engagement_note | md2 }}_ · [src]({{ item.source_url }})
+{% endfor %}
+
+⚽ *Спорт* _\(без NFL/гольфа/водных\)_
+{% for item in verticals.sports %}
+*{{ loop.index }}\.* *{{ item.title | md2 }}* — {{ item.summary | md2 }}
+_{{ item.engagement_note | md2 }}_ · [src]({{ item.source_url }})
+{% endfor %}
+
+🤖 *AI*
+{% for item in verticals.ai %}
+*{{ loop.index }}\.* *{{ item.title | md2 }}* — {{ item.summary | md2 }}
+_{{ item.engagement_note | md2 }}_ · [src]({{ item.source_url }})
+{% endfor %}
