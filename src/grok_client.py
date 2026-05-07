@@ -153,7 +153,6 @@ def _call_with_retry(
                 },
                 max_output_tokens=MAX_OUTPUT_TOKENS,
                 reasoning={"effort": REASONING_EFFORT},
-                metadata={"call": call_label},
             )
             payload = json.loads(resp.output_text)
             telemetry.write({
