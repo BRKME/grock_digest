@@ -63,46 +63,53 @@ SCHEMA_VERTICALS = {
 # ---------------------- PROMPTS ----------------------
 
 _SYSTEM_NEWS = (
-    "You are a news curator for a Telegram channel. "
+    "You are a news curator for a Russian-language Telegram channel. "
     "Use the x_search tool to find the most discussed topics on X (Twitter) "
     "in the last 24 hours. Use lang:en filter for the English bucket and lang:ru "
     "for the Russian bucket. Rank by engagement: views + reposts + replies. "
     "Skip NSFW, graphic violence, porn-bot spam, and clear scam/giveaway threads. "
-    "Each summary must be in the SAME language as its bucket "
-    "(English summaries for en_top, Russian summaries for ru_top). "
+    "IMPORTANT: ALL titles and summaries MUST be in Russian, regardless of the "
+    "source language. For the en_top bucket — translate titles and summaries from "
+    "English into natural Russian. For ru_top — keep Russian. "
+    "engagement_note format example: '7.1M просмотров, 16K репостов, 6.8K ответов'. "
     "Output ONLY valid JSON matching the provided schema."
 )
 
 _USER_NEWS_TMPL = (
-    "Find:\n"
-    "- Top 5 most-discussed topics in English-language X (lang:en) from the last 24 hours.\n"
-    "- Top 5 most-discussed topics in Russian-language X (lang:ru) from the last 24 hours.\n\n"
-    "For each item provide a clean factual title (no clickbait), a 1-2 sentence summary "
-    "in the original language of the segment, an engagement note "
-    "(e.g. '12M views, 4K reposts'), and a representative source URL on x.com.\n\n"
-    "EXCLUDE topics whose normalized title hashes are in this list (already covered "
-    "in a previous digest within 48h):\n{seen}"
+    "Найди:\n"
+    "- Топ-5 самых обсуждаемых тем в англоязычном X (lang:en) за последние 24 часа.\n"
+    "- Топ-5 самых обсуждаемых тем в русскоязычном X (lang:ru) за последние 24 часа.\n\n"
+    "Для каждой темы: чистый фактический заголовок на русском (без кликбейта), "
+    "1-2 предложения резюме на русском, метрика вовлечённости на русском "
+    "(пример: '12M просмотров, 4K репостов'), и URL на x.com.\n\n"
+    "ИСКЛЮЧИ темы, чьи нормализованные хэши уже в этом списке (были в дайджесте "
+    "за последние 48ч):\n{seen}"
 )
 
 _SYSTEM_VERT = (
-    "You are a trend analyst for a Telegram channel. "
+    "You are a trend analyst for a Russian-language Telegram channel. "
     "Use the x_search tool to find the top 5 trending topics on X (Twitter) "
     "in the last 24 hours for each vertical. "
     "Rank by engagement and discussion velocity. "
     "Skip NSFW and scam content. "
+    "IMPORTANT: ALL titles and summaries MUST be written in natural Russian, "
+    "regardless of the source language of the underlying tweets. "
+    "engagement_note in Russian (e.g. '1.2M просмотров, 3K репостов'). "
     "Output ONLY valid JSON matching the provided schema."
 )
 
 _USER_VERT_TMPL = (
-    "Provide top 5 trends from the last 24 hours on X for each category:\n"
-    "- crypto: cryptocurrency markets, projects, on-chain events.\n"
-    "- stocks: US equity markets (S&P 500, Nasdaq, individual tickers, macro/Fed).\n"
-    "- sports: any sport EXCEPT American football (NFL/college), golf, and water sports "
-    "  (swimming, surfing, sailing, water polo). Soccer/basketball/tennis/F1/MMA/etc are fine.\n"
-    "- ai: AI/ML — model releases, lab announcements, research, AI products.\n\n"
-    "For each item: clean factual title, 1-2 sentence summary in English, "
-    "engagement note, and source URL on x.com.\n\n"
-    "EXCLUDE topics whose normalized title hashes are in this list:\n{seen}"
+    "Дай топ-5 трендов за последние 24ч на X (Twitter) в каждой категории, "
+    "ВСЁ НА РУССКОМ ЯЗЫКЕ:\n"
+    "- crypto: рынки криптовалют, проекты, on-chain события.\n"
+    "- stocks: фондовый рынок США (S&P 500, Nasdaq, отдельные тикеры, ФРС, макро).\n"
+    "- sports: любой спорт КРОМЕ американского футбола (NFL/college), гольфа и "
+    "  водных видов (плавание, сёрфинг, парусный спорт, водное поло). "
+    "  Футбол/баскетбол/теннис/F1/MMA и прочее — можно.\n"
+    "- ai: AI/ML — релизы моделей, анонсы лабораторий, исследования, AI-продукты.\n\n"
+    "Для каждой темы: фактический заголовок на русском, резюме 1-2 предложения "
+    "на русском, метрика вовлечённости на русском, URL на x.com.\n\n"
+    "ИСКЛЮЧИ темы с этими нормализованными хэшами (уже были в дайджесте):\n{seen}"
 )
 
 

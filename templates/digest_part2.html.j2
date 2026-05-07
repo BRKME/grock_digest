@@ -1,0 +1,18 @@
+📊 <b>Тренды: финансовый блок (24ч)</b>
+
+💰 <b>Криптовалюта</b>
+
+{% for item in verticals.crypto %}
+<b>{{ loop.index }}. {{ item.title | e }}</b>
+{{ item.summary | e }}
+<i>{{ item.engagement_note | e }}</i> · <a href="{{ item.source_url | url }}">источник</a>
+
+{% endfor %}
+📈 <b>Фондовый рынок США</b>
+
+{% for item in verticals.stocks %}
+<b>{{ loop.index }}. {{ item.title | e }}</b>
+{{ item.summary | e }}
+<i>{{ item.engagement_note | e }}</i> · <a href="{{ item.source_url | url }}">источник</a>
+
+{% endfor %}

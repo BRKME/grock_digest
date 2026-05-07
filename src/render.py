@@ -1,7 +1,11 @@
-"""Jinja2 рендер дайджеста в MarkdownV2 + сплит на 2 сообщения для Telegram."""
+"""Jinja2 рендер дайджеста в Telegram HTML mode + сплит на сообщения.
+
+HTML парсер у Telegram надёжнее MarkdownV2 для динамики: эскейпим только
+&, <, > — никаких граблей с дефисами/точками/скобками внутри ссылок.
+"""
 from __future__ import annotations
 
-import re
+import html
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any
@@ -10,15 +14,21 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 _MOSCOW = timezone(timedelta(hours=3))
-
-# MarkdownV2 спецсимволы которые нужно эскейпить
-_MD2_ESCAPE = re.compile(r"([_\*\[\]\(\)~`>#\+\-=\|\{\}\.!\\])")
+_MAX_MSG = 3800  # запас от лимита 4096
 
 
-def md2(s: str) -> str:
+def e(s: Any) -> str:
+    """HTML-escape для контента (Telegram HTML parse mode)."""
     if s is None:
         return ""
-    return _MD2_ESCAPE.sub(r"\\\1", str(s))
+    return html.escape(str(s), quote=False)
+
+
+def url(s: Any) -> str:
+    """Эскейп URL для атрибута href: только & и кавычки."""
+    if s is None:
+        return ""
+    return str(s).replace("&", "&amp;").replace('"', "&quot;")
 
 
 _RU_MONTHS = [
@@ -34,19 +44,20 @@ def _ru_date(dt: datetime) -> str:
 def _env() -> Environment:
     env = Environment(
         loader=FileSystemLoader(TEMPLATES_DIR),
-        autoescape=select_autoescape(disabled_extensions=("md", "j2")),
+        autoescape=select_autoescape(disabled_extensions=("html", "j2")),
         trim_blocks=True,
         lstrip_blocks=True,
     )
-    env.filters["md2"] = md2
+    env.filters["e"] = e
+    env.filters["url"] = url
     return env
 
 
 def render_digest(*, slot: str, news: dict[str, Any], verticals: dict[str, Any]) -> list[str]:
-    """Возвращает список сообщений (≤4000 символов каждое) для последовательной отправки."""
+    """Возвращает список HTML-сообщений (каждое ≤ ~3800 символов)."""
     env = _env()
     now = datetime.now(_MOSCOW)
-    ctx = {
+    base_ctx = {
         "slot": slot,
         "slot_label": "Утренний" if slot == "morning" else "Вечерний",
         "slot_emoji": "🌅" if slot == "morning" else "🌇",
@@ -55,6 +66,34 @@ def render_digest(*, slot: str, news: dict[str, Any], verticals: dict[str, Any])
         "news": news,
         "verticals": verticals,
     }
-    msg1 = env.get_template("digest_part1.md.j2").render(**ctx)
-    msg2 = env.get_template("digest_part2.md.j2").render(**ctx)
-    return [msg1.strip(), msg2.strip()]
+    parts: list[str] = []
+    for tpl in (
+        "digest_part1.html.j2",   # header + EN top + RU top
+        "digest_part2.html.j2",   # crypto + stocks
+        "digest_part3.html.j2",   # sports + ai
+    ):
+        msg = env.get_template(tpl).render(**base_ctx).strip()
+        if not msg:
+            continue
+        # Safety: если кусок всё-таки распух — режем по двойным переносам строк
+        if len(msg) <= _MAX_MSG:
+            parts.append(msg)
+        else:
+            parts.extend(_safe_split(msg))
+    return parts
+
+
+def _safe_split(text: str) -> list[str]:
+    """Резка длинного куска по двойным переносам, не превышая _MAX_MSG."""
+    chunks: list[str] = []
+    cur = ""
+    for block in text.split("\n\n"):
+        candidate = (cur + "\n\n" + block) if cur else block
+        if len(candidate) > _MAX_MSG and cur:
+            chunks.append(cur)
+            cur = block
+        else:
+            cur = candidate
+    if cur:
+        chunks.append(cur)
+    return chunks

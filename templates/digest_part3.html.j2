@@ -1,0 +1,18 @@
+🎯 <b>Тренды: спорт &amp; AI (24ч)</b>
+
+⚽ <b>Спорт</b> <i>(без NFL/гольфа/водных видов)</i>
+
+{% for item in verticals.sports %}
+<b>{{ loop.index }}. {{ item.title | e }}</b>
+{{ item.summary | e }}
+<i>{{ item.engagement_note | e }}</i> · <a href="{{ item.source_url | url }}">источник</a>
+
+{% endfor %}
+🤖 <b>AI</b>
+
+{% for item in verticals.ai %}
+<b>{{ loop.index }}. {{ item.title | e }}</b>
+{{ item.summary | e }}
+<i>{{ item.engagement_note | e }}</i> · <a href="{{ item.source_url | url }}">источник</a>
+
+{% endfor %}

@@ -1,0 +1,19 @@
+{{ slot_emoji }} <b>{{ slot_label | e }} дайджест Twitter</b> — {{ date_str | e }}
+<i>{{ time_str | e }}</i>
+
+📰 <b>Топ EN-сегмента X (24ч)</b>
+
+{% for item in news.en_top %}
+<b>{{ loop.index }}. {{ item.title | e }}</b>
+{{ item.summary | e }}
+<i>{{ item.engagement_note | e }}</i> · <a href="{{ item.source_url | url }}">источник</a>
+
+{% endfor %}
+🇷🇺 <b>Топ RU-сегмента X (24ч)</b>
+
+{% for item in news.ru_top %}
+<b>{{ loop.index }}. {{ item.title | e }}</b>
+{{ item.summary | e }}
+<i>{{ item.engagement_note | e }}</i> · <a href="{{ item.source_url | url }}">источник</a>
+
+{% endfor %}
