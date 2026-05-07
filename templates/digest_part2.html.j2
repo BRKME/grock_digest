@@ -3,7 +3,7 @@
 {% for item in buckets.macro %}
 <b>{{ loop.index }}. {{ item.title | e }}</b>
 {{ item.summary | e }}
-<i>{{ item.engagement_note | e }}</i> · <a href="{{ item.source_url | url }}">источник</a>
+<i>{{ item.engagement_note | e }}</i>
 
 {% endfor %}
 💰 <b>Криптовалюта (24ч)</b>
@@ -11,6 +11,6 @@
 {% for item in buckets.crypto %}
 <b>{{ loop.index }}. {{ item.title | e }}</b>
 {{ item.summary | e }}
-<i>{{ item.engagement_note | e }}</i> · <a href="{{ item.source_url | url }}">источник</a>
+<i>{{ item.engagement_note | e }}</i>
 
 {% endfor %}

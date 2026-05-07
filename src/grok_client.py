@@ -31,12 +31,11 @@ _client = OpenAI(api_key=XAI_API_KEY, base_url="https://api.x.ai/v1")
 _ITEM_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["title", "summary", "engagement_note", "source_url"],
+    "required": ["title", "summary", "engagement_note"],
     "properties": {
         "title": {"type": "string", "maxLength": 140},
         "summary": {"type": "string", "maxLength": 320},
         "engagement_note": {"type": "string", "maxLength": 80},
-        "source_url": {"type": "string"},
     },
 }
 
@@ -94,7 +93,6 @@ _RUSSIAN_OUTPUT_RULES = (
     "'804K просмотров, 12.6K лайков'.\n"
     "Title: clean factual headline in Russian, no clickbait, no emoji.\n"
     "Summary: 1-2 sentences in Russian.\n"
-    "source_url: full URL on x.com.\n"
 )
 
 

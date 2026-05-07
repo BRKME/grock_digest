@@ -6,6 +6,6 @@
 {% for item in buckets.ru_top %}
 <b>{{ loop.index }}. {{ item.title | e }}</b>
 {{ item.summary | e }}
-<i>{{ item.engagement_note | e }}</i> · <a href="{{ item.source_url | url }}">источник</a>
+<i>{{ item.engagement_note | e }}</i>
 
 {% endfor %}
