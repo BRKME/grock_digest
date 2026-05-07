@@ -14,6 +14,15 @@ _ALL_KEYS_FIN = ("crypto", "stocks", "bigtech")
 _ALL_KEYS_THEM = ("sports", "ai")
 
 
+def _sort_buckets(payload: dict, keys: tuple[str, ...]) -> dict:
+    """Сортировка items внутри каждой указанной корзины по score desc."""
+    out = dict(payload)
+    for k in keys:
+        items = payload.get(k, []) or []
+        out[k] = sorted(items, key=lambda x: x.get("score", 0), reverse=True)
+    return out
+
+
 def run(slot: str) -> None:
     started = datetime.now(timezone.utc)
     seen = state.load_seen_hashes()
@@ -27,6 +36,12 @@ def run(slot: str) -> None:
     news, dropped_a = dedup.filter_seen(news, seen, keys=_ALL_KEYS_NEWS)
     financial, dropped_b = dedup.filter_seen(financial, seen, keys=_ALL_KEYS_FIN)
     thematic, dropped_c = dedup.filter_seen(thematic, seen, keys=_ALL_KEYS_THEM)
+
+    # сортировка по score desc внутри каждой корзины (на случай если Grok
+    # вернул не отсортированным)
+    news = _sort_buckets(news, _ALL_KEYS_NEWS)
+    financial = _sort_buckets(financial, _ALL_KEYS_FIN)
+    thematic = _sort_buckets(thematic, _ALL_KEYS_THEM)
 
     # рендер и отправка
     msgs = render.render_digest(

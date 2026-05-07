@@ -31,11 +31,11 @@ _client = OpenAI(api_key=XAI_API_KEY, base_url="https://api.x.ai/v1")
 _ITEM_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["title", "summary", "engagement_note"],
+    "required": ["title", "summary", "score"],
     "properties": {
         "title": {"type": "string", "maxLength": 140},
         "summary": {"type": "string", "maxLength": 320},
-        "engagement_note": {"type": "string", "maxLength": 80},
+        "score": {"type": "integer", "minimum": 0},
     },
 }
 
@@ -83,16 +83,14 @@ _QUALITY_RULES = (
 )
 
 _RUSSIAN_OUTPUT_RULES = (
-    "Output language: ALL titles, summaries and engagement_note MUST be "
-    "in natural Russian, regardless of source tweet language.\n"
-    "engagement_note format: number + unit in Russian. "
-    "Use 'M просмотров' for >=1 000 000, 'K просмотров' for 1 000-999 999, "
-    "exact number for <1 000. Same logic for 'репостов', 'лайков', 'ответов'. "
-    "Combine 2-3 most relevant metrics, comma-separated.\n"
-    "Examples: '12.4M просмотров, 3.2K репостов, 1.1K ответов', "
-    "'804K просмотров, 12.6K лайков'.\n"
+    "Output language: ALL titles and summaries MUST be in natural Russian, "
+    "regardless of source tweet language.\n"
     "Title: clean factual headline in Russian, no clickbait, no emoji.\n"
     "Summary: 1-2 sentences in Russian.\n"
+    "score: integer engagement metric used for ranking. Use the LIKES count "
+    "of the primary tweet. If likes are unavailable, use floor(views / 10) as "
+    "a fallback approximation. Higher = more engaging. Items within each "
+    "bucket should be returned sorted DESCENDING by score (highest first).\n"
 )
 
 

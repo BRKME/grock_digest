@@ -6,6 +6,5 @@
 {% for item in buckets.ru_top %}
 <b>{{ loop.index }}. {{ item.title | e }}</b>
 {{ item.summary | e }}
-<i>{{ item.engagement_note | e }}</i>
 
 {% endfor %}

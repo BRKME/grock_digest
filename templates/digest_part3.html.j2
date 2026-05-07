@@ -3,7 +3,6 @@
 {% for item in buckets.stocks %}
 <b>{{ loop.index }}. {{ item.title | e }}</b>
 {{ item.summary | e }}
-<i>{{ item.engagement_note | e }}</i>
 
 {% endfor %}
 🏢 <b>Big Tech (24ч)</b>
@@ -11,6 +10,5 @@
 {% for item in buckets.bigtech %}
 <b>{{ loop.index }}. {{ item.title | e }}</b>
 {{ item.summary | e }}
-<i>{{ item.engagement_note | e }}</i>
 
 {% endfor %}
