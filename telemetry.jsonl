@@ -1,0 +1,2 @@
+{"ts": "2026-05-07T19:36:00.803278+00:00", "call": "A_news", "model": "grok-4.3", "attempt": 0, "input_tokens": 36077, "output_tokens": 5488, "cost_in_usd_ticks": 784130500}
+{"ts": "2026-05-07T19:36:46.916292+00:00", "call": "B_verticals", "model": "grok-4.3", "attempt": 0, "input_tokens": 16055, "output_tokens": 5765, "cost_in_usd_ticks": 521964500}
