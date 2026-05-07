@@ -1,16 +1,14 @@
-🎯 <b>Тренды: спорт &amp; AI (24ч)</b>
+📈 <b>Фондовый рынок США (24ч)</b>
 
-⚽ <b>Спорт</b> <i>(без NFL/гольфа/водных видов)</i>
-
-{% for item in verticals.sports %}
+{% for item in buckets.stocks %}
 <b>{{ loop.index }}. {{ item.title | e }}</b>
 {{ item.summary | e }}
 <i>{{ item.engagement_note | e }}</i> · <a href="{{ item.source_url | url }}">источник</a>
 
 {% endfor %}
-🤖 <b>AI</b>
+🏢 <b>Big Tech (24ч)</b>
 
-{% for item in verticals.ai %}
+{% for item in buckets.bigtech %}
 <b>{{ loop.index }}. {{ item.title | e }}</b>
 {{ item.summary | e }}
 <i>{{ item.engagement_note | e }}</i> · <a href="{{ item.source_url | url }}">источник</a>

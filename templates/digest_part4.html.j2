@@ -1,14 +1,14 @@
-📊 <b>Macro / ФРС / геополитика рынков (24ч)</b>
+⚽ <b>Спорт (24ч)</b> <i>(без NFL/гольфа/водных видов)</i>
 
-{% for item in buckets.macro %}
+{% for item in buckets.sports %}
 <b>{{ loop.index }}. {{ item.title | e }}</b>
 {{ item.summary | e }}
 <i>{{ item.engagement_note | e }}</i> · <a href="{{ item.source_url | url }}">источник</a>
 
 {% endfor %}
-💰 <b>Криптовалюта (24ч)</b>
+🤖 <b>AI (24ч)</b>
 
-{% for item in buckets.crypto %}
+{% for item in buckets.ai %}
 <b>{{ loop.index }}. {{ item.title | e }}</b>
 {{ item.summary | e }}
 <i>{{ item.engagement_note | e }}</i> · <a href="{{ item.source_url | url }}">источник</a>

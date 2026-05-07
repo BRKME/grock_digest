@@ -1,7 +1,10 @@
-"""xAI Grok клиент. Два вызова: общие новости (EN+RU) и вертикали.
+"""xAI Grok клиент. Три вызова под 7 категорий:
 
-Использует Responses API с серверным тулом x_search.
-SDK: openai (xAI совместим через base_url).
+1. call_news       → ru_top + macro
+2. call_financial  → crypto + stocks + bigtech
+3. call_thematic   → sports + ai
+
+Использует Responses API + серверный тул x_search.
 """
 from __future__ import annotations
 
@@ -18,12 +21,12 @@ XAI_API_KEY = os.environ["XAI_API_KEY"]
 MODEL_PRIMARY = os.environ.get("GROK_MODEL_PRIMARY", "grok-4.3")
 MODEL_FALLBACK = os.environ.get("GROK_MODEL_FALLBACK", "grok-4.20-non-reasoning")
 REASONING_EFFORT = os.environ.get("GROK_REASONING_EFFORT", "medium")
-MAX_OUTPUT_TOKENS = int(os.environ.get("GROK_MAX_OUTPUT", "2500"))
+MAX_OUTPUT_TOKENS = int(os.environ.get("GROK_MAX_OUTPUT", "3000"))
 
 _client = OpenAI(api_key=XAI_API_KEY, base_url="https://api.x.ai/v1")
 
 
-# ---------------------- SCHEMAS ----------------------
+# ---------------------- SCHEMA ITEM ----------------------
 
 _ITEM_SCHEMA = {
     "type": "object",
@@ -37,27 +40,62 @@ _ITEM_SCHEMA = {
     },
 }
 
+
+def _bucket(items: int = 5) -> dict:
+    return {"type": "array", "minItems": items, "maxItems": items, "items": _ITEM_SCHEMA}
+
+
 SCHEMA_NEWS = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["en_top", "ru_top"],
-    "properties": {
-        "en_top": {"type": "array", "minItems": 5, "maxItems": 5, "items": _ITEM_SCHEMA},
-        "ru_top": {"type": "array", "minItems": 5, "maxItems": 5, "items": _ITEM_SCHEMA},
-    },
+    "required": ["ru_top", "macro"],
+    "properties": {"ru_top": _bucket(), "macro": _bucket()},
 }
 
-SCHEMA_VERTICALS = {
+SCHEMA_FINANCIAL = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["crypto", "stocks", "sports", "ai"],
-    "properties": {
-        "crypto": {"type": "array", "minItems": 5, "maxItems": 5, "items": _ITEM_SCHEMA},
-        "stocks": {"type": "array", "minItems": 5, "maxItems": 5, "items": _ITEM_SCHEMA},
-        "sports": {"type": "array", "minItems": 5, "maxItems": 5, "items": _ITEM_SCHEMA},
-        "ai":     {"type": "array", "minItems": 5, "maxItems": 5, "items": _ITEM_SCHEMA},
-    },
+    "required": ["crypto", "stocks", "bigtech"],
+    "properties": {"crypto": _bucket(), "stocks": _bucket(), "bigtech": _bucket()},
 }
+
+SCHEMA_THEMATIC = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["sports", "ai"],
+    "properties": {"sports": _bucket(), "ai": _bucket()},
+}
+
+
+# ---------------------- SHARED RULES ----------------------
+
+_QUALITY_RULES = (
+    "Quality rules (MANDATORY):\n"
+    "- Maximum 1 item per source brand/account per bucket "
+    "  (no two items from the same X handle in the same bucket).\n"
+    "- Skip low-signal content: meme reposts of celebrity videos, fan-account "
+    "  reaction posts, generic cute/aesthetic content, simple PR photo dumps "
+    "  (e.g. 'team posted some good vibes photos'), giveaway/scam threads.\n"
+    "- Skip dangerous content: bioweapon creation/transmission how-to, "
+    "  terrorist attack glorification, child exploitation, doxxing, illegal "
+    "  drug/weapon marketplaces, technical instructions for harm.\n"
+    "- Skip NSFW and porn-bot spam.\n"
+    "- Each item must be a distinct STORY, not a slight variation of the same event.\n"
+)
+
+_RUSSIAN_OUTPUT_RULES = (
+    "Output language: ALL titles, summaries and engagement_note MUST be "
+    "in natural Russian, regardless of source tweet language.\n"
+    "engagement_note format: number + unit in Russian. "
+    "Use 'M просмотров' for >=1 000 000, 'K просмотров' for 1 000-999 999, "
+    "exact number for <1 000. Same logic for 'репостов', 'лайков', 'ответов'. "
+    "Combine 2-3 most relevant metrics, comma-separated.\n"
+    "Examples: '12.4M просмотров, 3.2K репостов, 1.1K ответов', "
+    "'804K просмотров, 12.6K лайков'.\n"
+    "Title: clean factual headline in Russian, no clickbait, no emoji.\n"
+    "Summary: 1-2 sentences in Russian.\n"
+    "source_url: full URL on x.com.\n"
+)
 
 
 # ---------------------- PROMPTS ----------------------
@@ -65,79 +103,117 @@ SCHEMA_VERTICALS = {
 _SYSTEM_NEWS = (
     "You are a news curator for a Russian-language Telegram channel. "
     "Use the x_search tool to find the most discussed topics on X (Twitter) "
-    "in the last 24 hours. Use lang:en filter for the English bucket and lang:ru "
-    "for the Russian bucket. Rank by engagement: views + reposts + replies. "
-    "Skip NSFW, graphic violence, porn-bot spam, and clear scam/giveaway threads. "
-    "IMPORTANT: ALL titles and summaries MUST be in Russian, regardless of the "
-    "source language. For the en_top bucket — translate titles and summaries from "
-    "English into natural Russian. For ru_top — keep Russian. "
-    "engagement_note format example: '7.1M просмотров, 16K репостов, 6.8K ответов'. "
-    "Output ONLY valid JSON matching the provided schema."
+    "in the last 24 hours.\n\n"
+    + _QUALITY_RULES
+    + "\n"
+    + _RUSSIAN_OUTPUT_RULES
+    + "\nOutput ONLY valid JSON matching the provided schema."
 )
 
 _USER_NEWS_TMPL = (
     "Найди:\n"
-    "- Топ-5 самых обсуждаемых тем в англоязычном X (lang:en) за последние 24 часа.\n"
-    "- Топ-5 самых обсуждаемых тем в русскоязычном X (lang:ru) за последние 24 часа.\n\n"
-    "Для каждой темы: чистый фактический заголовок на русском (без кликбейта), "
-    "1-2 предложения резюме на русском, метрика вовлечённости на русском "
-    "(пример: '12M просмотров, 4K репостов'), и URL на x.com.\n\n"
-    "ИСКЛЮЧИ темы, чьи нормализованные хэши уже в этом списке (были в дайджесте "
-    "за последние 48ч):\n{seen}"
+    "- ru_top: топ-5 самых обсуждаемых тем в РУССКОЯЗЫЧНОМ X (lang:ru) за 24ч. "
+    "  Общая повестка: политика РФ, общество, культура, происшествия, экономика РФ.\n"
+    "- macro: топ-5 макро-событий, влияющих на рынки, за 24ч. "
+    "  Сюда входит: ФРС/Пауэлл, инфляция/CPI/PCE/jobs, госдолг США, "
+    "  торговые войны и тарифы, санкции, нефтяные шоки, геополитические "
+    "  события с прямым рыночным эффектом (oil/gas/Taiwan/Middle East). "
+    "  ИСКЛЮЧИ: движения отдельных тикеров (это в stocks), чисто крипто-новости "
+    "  (это в crypto).\n\n"
+    "Не более 1 темы с одного аккаунта в каждой корзине.\n"
+    "Ранжируй по реальной вовлечённости (просмотры + репосты + ответы), "
+    "а не по громкости заголовка.\n\n"
+    "ИСКЛЮЧИ темы, чьи нормализованные хэши уже в этом списке (были в "
+    "дайджесте за последние 48ч):\n{seen}"
 )
 
-_SYSTEM_VERT = (
-    "You are a trend analyst for a Russian-language Telegram channel. "
-    "Use the x_search tool to find the top 5 trending topics on X (Twitter) "
-    "in the last 24 hours for each vertical. "
-    "Rank by engagement and discussion velocity. "
-    "Skip NSFW and scam content. "
-    "IMPORTANT: ALL titles and summaries MUST be written in natural Russian, "
-    "regardless of the source language of the underlying tweets. "
-    "engagement_note in Russian (e.g. '1.2M просмотров, 3K репостов'). "
-    "Output ONLY valid JSON matching the provided schema."
+_SYSTEM_FIN = (
+    "You are a financial trends analyst for a Russian-language Telegram channel. "
+    "Use the x_search tool to find top trends on X in the last 24 hours.\n\n"
+    + _QUALITY_RULES
+    + "\n"
+    + _RUSSIAN_OUTPUT_RULES
+    + "\nOutput ONLY valid JSON matching the provided schema."
 )
 
-_USER_VERT_TMPL = (
-    "Дай топ-5 трендов за последние 24ч на X (Twitter) в каждой категории, "
-    "ВСЁ НА РУССКОМ ЯЗЫКЕ:\n"
-    "- crypto: рынки криптовалют, проекты, on-chain события.\n"
-    "- stocks: фондовый рынок США (S&P 500, Nasdaq, отдельные тикеры, ФРС, макро).\n"
-    "- sports: любой спорт КРОМЕ американского футбола (NFL/college), гольфа и "
-    "  водных видов (плавание, сёрфинг, парусный спорт, водное поло). "
-    "  Футбол/баскетбол/теннис/F1/MMA и прочее — можно.\n"
-    "- ai: AI/ML — релизы моделей, анонсы лабораторий, исследования, AI-продукты.\n\n"
-    "Для каждой темы: фактический заголовок на русском, резюме 1-2 предложения "
-    "на русском, метрика вовлечённости на русском, URL на x.com.\n\n"
-    "ИСКЛЮЧИ темы с этими нормализованными хэшами (уже были в дайджесте):\n{seen}"
+_USER_FIN_TMPL = (
+    "Дай топ-5 тем за 24ч на X в каждой категории:\n\n"
+    "- crypto: рынки криптовалют, on-chain события, движения BTC/ETH/altcoins, "
+    "  институциональные новости, регуляторные решения по крипте, ETF.\n"
+    "- stocks: фондовый рынок США. Конкретные тикеры (NVDA/TSLA/AAPL/etc), "
+    "  движения индексов S&P 500/Nasdaq/Dow, отчётности, IPO/M&A. "
+    "  ИСКЛЮЧИ: чистый макро и ФРС (это в macro), AI-релизы моделей "
+    "  (это в ai). Если ралли/обвал тикера связан с AI — можно включить "
+    "  под углом рынка.\n"
+    "- bigtech: Big Tech и НЕ-AI техно-новости. Apple/Google/Microsoft/Meta/"
+    "  Amazon/Tesla/NVIDIA — продуктовые анонсы, корпоративные решения, "
+    "  антимонопольные дела, hardware-релизы, IPO техно-компаний. "
+    "  ИСКЛЮЧИ: релизы AI-моделей и AI-research (это в ai). Сюда — Tesla FSD, "
+    "  iPhone, Vision Pro, корпоративные приобретения, закрытия продуктов.\n\n"
+    "Не более 1 темы с одного аккаунта в каждой корзине.\n\n"
+    "ИСКЛЮЧИ темы с этими хэшами:\n{seen}"
+)
+
+_SYSTEM_THEM = (
+    "You are a sports & AI trends analyst for a Russian-language Telegram channel. "
+    "Use the x_search tool to find top trends on X in the last 24 hours.\n\n"
+    + _QUALITY_RULES
+    + "\n"
+    + _RUSSIAN_OUTPUT_RULES
+    + "\nOutput ONLY valid JSON matching the provided schema."
+)
+
+_USER_THEM_TMPL = (
+    "Дай топ-5 тем за 24ч на X в каждой категории:\n\n"
+    "- sports: любой спорт КРОМЕ американского футбола (NFL и college football), "
+    "  гольфа и водных видов (плавание, сёрфинг, парусный спорт, водное поло). "
+    "  Можно: футбол (soccer), баскетбол (NBA/EuroLeague), теннис, F1/MotoGP, "
+    "  MMA/UFC/бокс, хоккей (NHL/KHL), киберспорт, олимпийские виды. "
+    "  Приоритет — конкретные матчи, результаты, трансферы, награды. "
+    "  ИСКЛЮЧИ: PR-фото клубов без новостной нагрузки, видео-нарезки "
+    "  'best moments', fan-account reactions без подтверждённого факта.\n"
+    "- ai: AI/ML индустрия — релизы моделей (GPT/Claude/Gemini/Llama/etc), "
+    "  анонсы лабораторий (OpenAI/Anthropic/Google DeepMind/xAI/Meta AI), "
+    "  AI-исследования и статьи, AI-продукты и интеграции, "
+    "  компьютные/инфраструктурные сделки.\n\n"
+    "Не более 1 темы с одного аккаунта в каждой корзине.\n\n"
+    "ИСКЛЮЧИ темы с этими хэшами:\n{seen}"
 )
 
 
 # ---------------------- CALLS ----------------------
 
 def call_news_digest(seen_hashes: list[str]) -> dict[str, Any]:
-    user_msg = _USER_NEWS_TMPL.format(seen=seen_hashes[:50] or "[]")
-    return _call_with_retry(
+    return _call(
         system=_SYSTEM_NEWS,
-        user=user_msg,
+        user=_USER_NEWS_TMPL.format(seen=seen_hashes[:50] or "[]"),
         schema=SCHEMA_NEWS,
         schema_name="news_digest",
         call_label="A_news",
     )
 
 
-def call_verticals_digest(seen_hashes: list[str]) -> dict[str, Any]:
-    user_msg = _USER_VERT_TMPL.format(seen=seen_hashes[:50] or "[]")
-    return _call_with_retry(
-        system=_SYSTEM_VERT,
-        user=user_msg,
-        schema=SCHEMA_VERTICALS,
-        schema_name="verticals_digest",
-        call_label="B_verticals",
+def call_financial_digest(seen_hashes: list[str]) -> dict[str, Any]:
+    return _call(
+        system=_SYSTEM_FIN,
+        user=_USER_FIN_TMPL.format(seen=seen_hashes[:50] or "[]"),
+        schema=SCHEMA_FINANCIAL,
+        schema_name="financial_digest",
+        call_label="B_financial",
     )
 
 
-def _call_with_retry(
+def call_thematic_digest(seen_hashes: list[str]) -> dict[str, Any]:
+    return _call(
+        system=_SYSTEM_THEM,
+        user=_USER_THEM_TMPL.format(seen=seen_hashes[:50] or "[]"),
+        schema=SCHEMA_THEMATIC,
+        schema_name="thematic_digest",
+        call_label="C_thematic",
+    )
+
+
+def _call(
     *, system: str, user: str, schema: dict, schema_name: str, call_label: str,
 ) -> dict[str, Any]:
     last_err: Exception | None = None
@@ -182,7 +258,6 @@ def _call_with_retry(
 
 
 def _attr(obj: Any, name: str) -> Any:
-    """Безопасный getattr для usage-полей которые могут отсутствовать у разных моделей."""
     try:
         return getattr(obj, name, None)
     except Exception:

@@ -1,7 +1,10 @@
 """Jinja2 рендер дайджеста в Telegram HTML mode + сплит на сообщения.
 
-HTML парсер у Telegram надёжнее MarkdownV2 для динамики: эскейпим только
-&, <, > — никаких граблей с дефисами/точками/скобками внутри ссылок.
+Структура: 4 сообщения.
+1. header + Топ RU
+2. Macro + Crypto
+3. Stocks + Big Tech
+4. Sports + AI
 """
 from __future__ import annotations
 
@@ -18,14 +21,12 @@ _MAX_MSG = 3800  # запас от лимита 4096
 
 
 def e(s: Any) -> str:
-    """HTML-escape для контента (Telegram HTML parse mode)."""
     if s is None:
         return ""
     return html.escape(str(s), quote=False)
 
 
 def url(s: Any) -> str:
-    """Эскейп URL для атрибута href: только & и кавычки."""
     if s is None:
         return ""
     return str(s).replace("&", "&amp;").replace('"', "&quot;")
@@ -53,29 +54,35 @@ def _env() -> Environment:
     return env
 
 
-def render_digest(*, slot: str, news: dict[str, Any], verticals: dict[str, Any]) -> list[str]:
-    """Возвращает список HTML-сообщений (каждое ≤ ~3800 символов)."""
+def render_digest(
+    *,
+    slot: str,
+    news: dict[str, Any],
+    financial: dict[str, Any],
+    thematic: dict[str, Any],
+) -> list[str]:
     env = _env()
     now = datetime.now(_MOSCOW)
+    # Все корзины в один словарь — шаблоны обращаются как buckets.crypto и т.п.
+    buckets = {**(news or {}), **(financial or {}), **(thematic or {})}
     base_ctx = {
         "slot": slot,
-        "slot_label": "Утренний" if slot == "morning" else "Вечерний",
-        "slot_emoji": "🌅" if slot == "morning" else "🌇",
+        "slot_label": "Утренний",  # сейчас всегда утро
+        "slot_emoji": "🌅",
         "date_str": _ru_date(now),
         "time_str": now.strftime("%H:%M MSK"),
-        "news": news,
-        "verticals": verticals,
+        "buckets": buckets,
     }
     parts: list[str] = []
     for tpl in (
-        "digest_part1.html.j2",   # header + EN top + RU top
-        "digest_part2.html.j2",   # crypto + stocks
-        "digest_part3.html.j2",   # sports + ai
+        "digest_part1.html.j2",   # header + ru_top
+        "digest_part2.html.j2",   # macro + crypto
+        "digest_part3.html.j2",   # stocks + bigtech
+        "digest_part4.html.j2",   # sports + ai
     ):
         msg = env.get_template(tpl).render(**base_ctx).strip()
         if not msg:
             continue
-        # Safety: если кусок всё-таки распух — режем по двойным переносам строк
         if len(msg) <= _MAX_MSG:
             parts.append(msg)
         else:
@@ -84,7 +91,6 @@ def render_digest(*, slot: str, news: dict[str, Any], verticals: dict[str, Any])
 
 
 def _safe_split(text: str) -> list[str]:
-    """Резка длинного куска по двойным переносам, не превышая _MAX_MSG."""
     chunks: list[str] = []
     cur = ""
     for block in text.split("\n\n"):
