@@ -3,3 +3,7 @@
 {"ts": "2026-05-07T19:45:16.971524+00:00", "call": "A_news", "model": "grok-4.3", "attempt": 0, "input_tokens": 21130, "output_tokens": 5136, "cost_in_usd_ticks": 570349000}
 {"ts": "2026-05-07T19:46:20.539920+00:00", "call": "B_verticals", "model": "grok-4.3", "attempt": 0, "input_tokens": 17978, "output_tokens": 5054, "cost_in_usd_ticks": 526883000}
 {"ts": "2026-05-07T19:43:58.634814+00:00", "slot": "evening", "items_total": 30, "dropped_dedup": 0}
+{"ts": "2026-05-08T03:48:25.976783+00:00", "call": "A_news", "model": "grok-4.3", "attempt": 0, "input_tokens": 25974, "output_tokens": 5461, "cost_in_usd_ticks": 632304000}
+{"ts": "2026-05-08T03:51:11.219073+00:00", "call": "B_financial", "model": "grok-4.3", "attempt": 0, "input_tokens": 21504, "output_tokens": 7120, "cost_in_usd_ticks": 717904000}
+{"ts": "2026-05-08T03:52:38.295458+00:00", "call": "C_thematic", "model": "grok-4.3", "attempt": 0, "input_tokens": 16931, "output_tokens": 4834, "cost_in_usd_ticks": 529799500}
+{"ts": "2026-05-08T03:47:00.946206+00:00", "slot": "morning", "items_total": 35, "dropped_dedup": 0, "messages_sent": 4}
