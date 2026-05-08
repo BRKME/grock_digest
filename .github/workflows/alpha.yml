@@ -1,0 +1,56 @@
+name: alpha-weekly
+
+on:
+  schedule:
+    # Воскресенье 06:00 UTC = 09:00 MSK
+    - cron: "0 6 * * 0"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: alpha-weekly
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+      TELEGRAM_OWNER_CHAT_ID: ${{ secrets.TELEGRAM_OWNER_CHAT_ID }}
+      GROK_MODEL_PRIMARY: grok-4.3
+      GROK_MODEL_FALLBACK: grok-4.20-non-reasoning
+      GROK_REASONING_EFFORT: medium
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install deps
+        run: |
+          python -m pip install -U pip
+          pip install -r requirements.txt
+
+      - name: Run alpha hunt
+        run: python -m src.alpha
+
+      - name: Commit telemetry
+        if: always()
+        run: |
+          git config user.name "grock-digest-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add telemetry.jsonl 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "alpha: $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push
+          fi
