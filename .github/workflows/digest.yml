@@ -2,8 +2,8 @@ name: digest
 
 on:
   schedule:
-    # 01:00 UTC = 04:00 MSK (с учётом задержки GH Actions cron приходит ~05-07 MSK)
-    - cron: "0 1 * * *"
+    # 00:30 UTC = 03:30 MSK (с учётом задержки GH Actions приходит ~04:30-06 MSK)
+    - cron: "30 0 * * *"
   workflow_dispatch: {}
 
 permissions:
