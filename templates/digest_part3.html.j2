@@ -5,9 +5,9 @@
 {{ item.summary | e }}
 
 {% endfor %}
-🏢 <b>Big Tech (24ч)</b>
+{{ third_emoji }} <b>{{ third_label | e }} (24ч)</b>
 
-{% for item in buckets.bigtech %}
+{% for item in buckets[third] %}
 <b>{{ loop.index }}. {{ item.title | e }}</b>
 {{ item.summary | e }}
 

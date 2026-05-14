@@ -51,12 +51,26 @@ SCHEMA_NEWS = {
     "properties": {"ru_top": _bucket(), "macro": _bucket()},
 }
 
-SCHEMA_FINANCIAL = {
-    "type": "object",
-    "additionalProperties": False,
-    "required": ["crypto", "stocks", "bigtech"],
-    "properties": {"crypto": _bucket(), "stocks": _bucket(), "bigtech": _bucket()},
-}
+def _financial_schema(third: str) -> dict:
+    """Третий бакет — bigtech или pharma — меняется день через день."""
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["crypto", "stocks", third],
+        "properties": {
+            "crypto": _bucket(),
+            "stocks": _bucket(),
+            third: _bucket(items=5),
+        },
+    }
+
+
+# Pharma: те же требования что у bigtech — 5 пунктов, но другой состав:
+# ровно 3 США + ровно 2 РФ/СНГ (фарма + e-pharma).
+def _pharma_bucket() -> dict:
+    """Pharma bucket с теми же требованиями: 5 элементов, не больше не меньше."""
+    return {"type": "array", "minItems": 5, "maxItems": 5, "items": _ITEM_SCHEMA}
+
 
 SCHEMA_THEMATIC = {
     "type": "object",
@@ -124,15 +138,18 @@ _USER_NEWS_TMPL = (
 )
 
 _SYSTEM_FIN = (
-    "You are a financial trends analyst for a Russian-language Telegram channel. "
-    "Use the x_search tool to find top trends on X in the last 24 hours.\n\n"
+    "You are a financial and industry trends analyst for a Russian-language "
+    "Telegram channel. Use the x_search tool to find top trends on X in the "
+    "last 24 hours. Cover financial markets, crypto and the specific industry "
+    "vertical requested in the user prompt (Big Tech or Pharma).\n\n"
     + _QUALITY_RULES
     + "\n"
     + _RUSSIAN_OUTPUT_RULES
     + "\nOutput ONLY valid JSON matching the provided schema."
 )
 
-_USER_FIN_TMPL = (
+# BigTech-вариант (как было) — чётные дни года
+_USER_FIN_TMPL_BIGTECH = (
     "Дай топ-5 тем за 24ч на X в каждой категории:\n\n"
     "- crypto: рынки криптовалют, on-chain события, движения BTC/ETH/altcoins, "
     "  институциональные новости, регуляторные решения по крипте, ETF.\n"
@@ -149,6 +166,44 @@ _USER_FIN_TMPL = (
     "Не более 1 темы с одного аккаунта в каждой корзине.\n\n"
     "ИСКЛЮЧИ темы с этими хэшами:\n{seen}"
 )
+
+# Pharma-вариант — нечётные дни года
+_USER_FIN_TMPL_PHARMA = (
+    "Дай топ-5 тем за 24ч на X в каждой категории:\n\n"
+    "- crypto: рынки криптовалют, on-chain события, движения BTC/ETH/altcoins, "
+    "  институциональные новости, регуляторные решения по крипте, ETF.\n"
+    "- stocks: фондовый рынок США. Конкретные тикеры (NVDA/TSLA/AAPL/etc), "
+    "  движения индексов S&P 500/Nasdaq/Dow, отчётности, IPO/M&A. "
+    "  ИСКЛЮЧИ: чистый макро и ФРС, AI-релизы моделей.\n"
+    "- pharma: фармацевтический и e-pharma рынок. СТРОГО:\n"
+    "    * ровно 3 новости из США\n"
+    "    * ровно 2 новости из России / СНГ (фарма + e-pharma: онлайн-аптеки, "
+    "      маркетплейсы лекарств, рецептурные сервисы)\n"
+    "    * всего 5 пунктов\n"
+    "  Выделяй бизнес-влияние: кто выигрывает, рост продаж, регуляторные "
+    "  решения FDA/Минздрава, M&A сделки, IPO биотех-компаний, выход препаратов "
+    "  на рынок, ценовые войны, e-commerce фармы.\n"
+    "  ИСКЛЮЧИ: общие лайфстайл-материалы про здоровье, статьи о пользе "
+    "  витаминов без конкретного бизнес-контекста, мнения без новостной нагрузки.\n\n"
+    "Не более 1 темы с одного аккаунта в каждой корзине.\n\n"
+    "ИСКЛЮЧИ темы с этими хэшами:\n{seen}"
+)
+
+
+def pick_third_bucket() -> tuple[str, str]:
+    """Возвращает (имя_бакета, user_prompt_template) для текущего дня.
+
+    Чередуем по day-of-year (а не по дню недели — так чтобы при пропуске
+    запуска ротация не сбивалась):
+    - чётный day-of-year → bigtech
+    - нечётный          → pharma
+    """
+    from datetime import datetime, timezone
+    day = datetime.now(timezone.utc).timetuple().tm_yday
+    if day % 2 == 0:
+        return "bigtech", _USER_FIN_TMPL_BIGTECH
+    else:
+        return "pharma", _USER_FIN_TMPL_PHARMA
 
 _SYSTEM_THEM = (
     "You are a sports & AI trends analyst for a Russian-language Telegram channel. "
@@ -189,14 +244,22 @@ def call_news_digest(seen_hashes: list[str]) -> dict[str, Any]:
     )
 
 
-def call_financial_digest(seen_hashes: list[str]) -> dict[str, Any]:
-    return _call(
+def call_financial_digest(seen_hashes: list[str]) -> tuple[dict[str, Any], str]:
+    """Возвращает (payload, имя_третьего_бакета).
+    
+    Имя третьего бакета — 'bigtech' или 'pharma' — выбирается по чётности
+    дня года. main.py использует его чтобы знать какой шаблон рендерить
+    и какие ключи дедупить.
+    """
+    third, user_tmpl = pick_third_bucket()
+    payload = _call(
         system=_SYSTEM_FIN,
-        user=_USER_FIN_TMPL.format(seen=seen_hashes[:50] or "[]"),
-        schema=SCHEMA_FINANCIAL,
-        schema_name="financial_digest",
-        call_label="B_financial",
+        user=user_tmpl.format(seen=seen_hashes[:50] or "[]"),
+        schema=_financial_schema(third),
+        schema_name=f"financial_digest_{third}",
+        call_label=f"B_financial_{third}",
     )
+    return payload, third
 
 
 def call_thematic_digest(seen_hashes: list[str]) -> dict[str, Any]:

@@ -60,24 +60,34 @@ def render_digest(
     news: dict[str, Any],
     financial: dict[str, Any],
     thematic: dict[str, Any],
+    third: str = "bigtech",
 ) -> list[str]:
     env = _env()
     now = datetime.now(_MOSCOW)
-    # Все корзины в один словарь — шаблоны обращаются как buckets.crypto и т.п.
     buckets = {**(news or {}), **(financial or {}), **(thematic or {})}
+
+    # Заголовок и эмодзи для динамического третьего бакета
+    third_meta = {
+        "bigtech": {"emoji": "🏢", "label": "Big Tech"},
+        "pharma":  {"emoji": "💊", "label": "Pharma"},
+    }.get(third, {"emoji": "📌", "label": third.title()})
+
     base_ctx = {
         "slot": slot,
-        "slot_label": "Утренний",  # сейчас всегда утро
+        "slot_label": "Утренний",
         "slot_emoji": "🌅",
         "date_str": _ru_date(now),
         "time_str": now.strftime("%H:%M MSK"),
         "buckets": buckets,
+        "third": third,
+        "third_emoji": third_meta["emoji"],
+        "third_label": third_meta["label"],
     }
     parts: list[str] = []
     for tpl in (
         "digest_part1.html.j2",   # header + ru_top
         "digest_part2.html.j2",   # macro + crypto
-        "digest_part3.html.j2",   # stocks + bigtech
+        "digest_part3.html.j2",   # stocks + third (bigtech/pharma)
         "digest_part4.html.j2",   # sports + ai
     ):
         msg = env.get_template(tpl).render(**base_ctx).strip()

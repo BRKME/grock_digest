@@ -10,7 +10,7 @@ from . import grok_client, dedup, state, render, telegram_sender, telemetry
 
 # ключи всех корзин — для дедупа и сбора хэшей
 _ALL_KEYS_NEWS = ("ru_top", "macro")
-_ALL_KEYS_FIN = ("crypto", "stocks", "bigtech")
+_BASE_KEYS_FIN = ("crypto", "stocks")  # третий бакет (bigtech/pharma) добавляется в runtime
 _ALL_KEYS_THEM = ("sports", "ai")
 
 
@@ -29,23 +29,24 @@ def run(slot: str) -> None:
 
     # 3 вызова Grok, каждый со своей корзиной категорий
     news = grok_client.call_news_digest(seen_hashes=seen)
-    financial = grok_client.call_financial_digest(seen_hashes=seen)
+    financial, third = grok_client.call_financial_digest(seen_hashes=seen)
     thematic = grok_client.call_thematic_digest(seen_hashes=seen)
+
+    fin_keys = _BASE_KEYS_FIN + (third,)
 
     # дедуп против последних 48ч
     news, dropped_a = dedup.filter_seen(news, seen, keys=_ALL_KEYS_NEWS)
-    financial, dropped_b = dedup.filter_seen(financial, seen, keys=_ALL_KEYS_FIN)
+    financial, dropped_b = dedup.filter_seen(financial, seen, keys=fin_keys)
     thematic, dropped_c = dedup.filter_seen(thematic, seen, keys=_ALL_KEYS_THEM)
 
-    # сортировка по score desc внутри каждой корзины (на случай если Grok
-    # вернул не отсортированным)
+    # сортировка по score desc
     news = _sort_buckets(news, _ALL_KEYS_NEWS)
-    financial = _sort_buckets(financial, _ALL_KEYS_FIN)
+    financial = _sort_buckets(financial, fin_keys)
     thematic = _sort_buckets(thematic, _ALL_KEYS_THEM)
 
     # рендер и отправка
     msgs = render.render_digest(
-        slot=slot, news=news, financial=financial, thematic=thematic,
+        slot=slot, news=news, financial=financial, thematic=thematic, third=third,
     )
     telegram_sender.send_messages(msgs)
 
