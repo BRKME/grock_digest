@@ -49,3 +49,7 @@
 {"ts": "2026-05-16T04:08:42.547266+00:00", "slot": "morning", "items_total": 35, "dropped_dedup": 0, "messages_sent": 4}
 {"ts": "2026-05-16T07:50:25.469553+00:00", "job": "pet_trends_weekly", "call": "grok", "model": "grok-4.3", "attempt": 0, "input_tokens": 31937, "output_tokens": 2859, "cost_in_usd_ticks": 660751500}
 {"ts": "2026-05-16T07:49:57.801467+00:00", "job": "pet_trends_weekly", "messages_sent": 1, "total_chars": 3334}
+{"ts": "2026-05-17T04:38:58.838670+00:00", "call": "A_news", "model": "grok-4.3", "attempt": 0, "input_tokens": 15856, "output_tokens": 3638, "cost_in_usd_ticks": 408910000}
+{"ts": "2026-05-17T04:40:01.215898+00:00", "call": "B_financial_pharma", "model": "grok-4.3", "attempt": 0, "input_tokens": 29617, "output_tokens": 5554, "cost_in_usd_ticks": 718614500}
+{"ts": "2026-05-17T04:40:41.623415+00:00", "call": "C_thematic", "model": "grok-4.3", "attempt": 0, "input_tokens": 17570, "output_tokens": 4306, "cost_in_usd_ticks": 514507000}
+{"ts": "2026-05-17T04:38:16.843848+00:00", "slot": "morning", "items_total": 35, "dropped_dedup": 0, "messages_sent": 4}
