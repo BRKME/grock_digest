@@ -41,12 +41,18 @@ _TRUSTMRR_URL = "https://trustmrr.com/api/v1/startups"
 _HIGH_REG_KEYWORDS = (
     # GLP-1 / weight loss / telehealth с рецептами
     "glp-1", "glp1", "weight loss", "semaglutide", "tirzepatide", "ozempic",
-    "telehealth", "prescription", "rx ", " rx",
+    "telehealth", "tele-health", "tele health", "online doctor",
+    "prescription", "rx ", " rx", "prescribing",
+    # Гормоны / репродуктивное здоровье
+    "hormone", "hrt ", "testosterone", "fertility clinic",
     # EHR с чувствительными данными
-    "ehr ", " ehr", "electronic health record", "i/dd",
-    "intellectual and developmental disab",
-    # Прочая медицина с PHI
-    "hormone prescribing",
+    "ehr ", " ehr", "electronic health record",
+    "i/dd", "intellectual and developmental disab",
+    "hipaa", "phi data", "patient record",
+    # Обход AI-детектеров (риски на стороне образовательных институтов)
+    "undetectable", "bypass turnitin", "humanize ai text", "evade detection",
+    # Прочие чувствительные категории
+    "controlled substance", "kratom", "cannabis prescription",
 )
 
 
@@ -174,11 +180,38 @@ _SYSTEM_PROMPT = (
     "Ты — аналитик стартап-трендов с фокусом на indie hacker / bootstrap сегмент. "
     "Тебе передают список из топ стартапов TrustMRR с verified Stripe revenue. "
     "Твоя задача — найти РАСТУЩИЕ ниши, рабочие бизнес-модели и неочевидные пересечения.\n\n"
-    "Анализируй ВНИМАТЕЛЬНО:\n"
-    "- Растущие = высокий MoM growth (>15%), не просто большой MRR\n"
-    "- Бизнес-модели = что общего у тех кто растёт быстро\n"
-    "- Паттерны = повторяющиеся технологические темы (AI-native, AEO, automation)\n"
-    "- Не пересказывай данные — синтезируй insights, которые не видны из таблицы\n\n"
+    "=== ЖЁСТКИЕ ПРАВИЛА ===\n\n"
+    "1. ИСПОЛЬЗУЙ ТОЛЬКО НАЗВАНИЯ ИЗ ПЕРЕДАННОГО СПИСКА.\n"
+    "   Каждое имя компании которое ты упоминаешь в examples/example/tools — "
+    "   должно дословно совпадать с полем `name` в одной из переданных записей. "
+    "   НЕ выдумывай компании. НЕ дополняй своими знаниями. НЕ называй "
+    "   'AEO Engine, Reddit Agency, etc.' если 'Reddit Agency' не было в списке. "
+    "   Если в списке нет 3 примеров для какой-то ниши — возьми 2.\n\n"
+    "2. ОБЪЯСНЯЙ ДЛЯ ЧЕЛОВЕКА БЕЗ ТЕХ-БЭКГРАУНДА.\n"
+    "   Аудитория — предприниматель, который НЕ знает индихакер-жаргон. "
+    "   Каждую аббревиатуру и нишевый термин РАСШИФРОВЫВАЙ при первом "
+    "   употреблении в скобках простыми словами. Примеры как надо:\n"
+    "   - 'AEO (оптимизация под AI-поиск — ChatGPT, Perplexity, Google AI Overview)'\n"
+    "   - 'LLM-агенты (программы которые сами выполняют задачи через нейросеть)'\n"
+    "   - 'AI outreach (рассылка персонализированных писем клиентам через ИИ)'\n"
+    "   - 'churn (% клиентов которые отписываются за месяц)'\n"
+    "   - 'CAC (стоимость привлечения одного клиента)'\n"
+    "   - 'pSEO (массовая генерация SEO-страниц программой)'\n"
+    "   - 'white-label (продаёшь продукт под чужим брендом)'\n"
+    "   НЕ употребляй жаргон без расшифровки. Лучше пара слов в скобках "
+    "   чем 10 минут гугления для читателя.\n\n"
+    "3. ОПИСАНИЯ ДОЛЖНЫ БЫТЬ ЖИТЕЙСКИМИ.\n"
+    "   Вместо 'трафик мигрирует с Google в LLM-агенты' пиши "
+    "   'люди стали искать ответы в ChatGPT вместо Google, и стартапы помогают "
+    "   компаниям попадать в эти ответы'. Конкретные действия, понятные глаголы.\n\n"
+    "4. driver / tactic / weekly_experiment — это ДЕЙСТВИЯ, не описания.\n"
+    "   'Поисковый трафик мигрирует' — описание, плохо.\n"
+    "   'Создай 5 страниц вопрос-ответ → попадёт в ChatGPT-ответы за 2 недели' — действие, хорошо.\n\n"
+    "5. Анализируй ВНИМАТЕЛЬНО данные:\n"
+    "   - 'Растущие' = высокий MoM growth (>15%), не просто большой MRR\n"
+    "   - 'Модель роста' = что общего у тех кто растёт быстро\n"
+    "   - 'Паттерны' = повторяющиеся технологические темы\n"
+    "   - НЕ пересказывай таблицу — синтезируй insights\n\n"
     "Отвечай СТРОГО в JSON по предоставленной схеме. На русском языке. "
     "Никаких преамбул, никакого Markdown в JSON-полях."
 )
@@ -286,13 +319,62 @@ def _build_user_prompt(startups: list[dict], excluded_count: int) -> str:
         }
         for s in startups
     ]
+    valid_names = [s["name"] for s in startups]
     return (
         f"Сегодня {datetime.now(_MOSCOW).strftime('%d.%m.%Y')}.\n\n"
+        f"Аудитория отчёта — предприниматель который думает про запуск "
+        f"маленького SaaS/AI бизнеса. НЕ технарь, индихакер-жаргона не знает. "
+        f"Каждый специальный термин обязательно расшифровывай в скобках.\n\n"
         f"Список топ-{len(startups)} стартапов с TrustMRR (отфильтровано: "
-        f"{excluded_count} GLP-1/EHR/телемедицина исключены отдельно):\n\n"
+        f"{excluded_count} GLP-1/EHR/телемедицина исключены):\n\n"
         f"{json.dumps(data, ensure_ascii=False, indent=1)}\n\n"
-        "Сделай еженедельный аналитический отчёт строго по схеме."
+        f"ВАЛИДНЫЕ ИМЕНА КОМПАНИЙ (используй ТОЛЬКО эти, дословно):\n"
+        f"{json.dumps(valid_names, ensure_ascii=False)}\n\n"
+        f"Сделай еженедельный аналитический отчёт строго по схеме. "
+        f"Перед отправкой ответа проверь: каждое имя в examples/example/tools "
+        f"присутствует в списке выше. Если выдумал — замени или удали."
     )
+
+
+def _validate_names(analysis: dict, valid_names: set[str]) -> tuple[dict, list[str]]:
+    """Проверяет что все упомянутые имена есть во входных данных.
+    
+    Возвращает (analysis, list_of_hallucinated). Не модифицирует — только
+    помечает что нашли. Это сигнал для следующего тюнинга промпта.
+    """
+    hallucinated: list[str] = []
+    
+    def _check(names_iter):
+        for n in names_iter:
+            if not n:
+                continue
+            n_str = str(n).strip()
+            if not n_str:
+                continue
+            # Точное совпадение или подстрока (Grok может слегка переформулировать)
+            n_lower = n_str.lower()
+            matched = any(
+                n_lower == v.lower() or n_lower in v.lower() or v.lower() in n_lower
+                for v in valid_names
+            )
+            if not matched:
+                hallucinated.append(n_str)
+    
+    # top_trends[].examples
+    for t in analysis.get("top_trends") or []:
+        _check(t.get("examples") or [])
+    # high_growth_models[].example — может содержать имя в начале
+    for m in analysis.get("high_growth_models") or []:
+        ex = m.get("example") or ""
+        # Берём первое слово до тире/двоеточия/скобки как кандидата
+        first = ex.split("—")[0].split(":")[0].split("(")[0].strip()
+        if first and len(first) < 50:
+            _check([first])
+    # aeo_block.tools
+    aeo = analysis.get("aeo_block") or {}
+    _check(aeo.get("tools") or [])
+    
+    return analysis, hallucinated
 
 
 def call_grok_analysis(startups: list[dict], excluded_count: int) -> dict[str, Any]:
@@ -423,7 +505,15 @@ def run() -> None:
         )
 
     # 3. Grok analysis (берём топ-50 по revenue для качества промпта)
-    analysis = call_grok_analysis(main[:50], excluded_count=len(excluded))
+    top_for_analysis = main[:50]
+    analysis = call_grok_analysis(top_for_analysis, excluded_count=len(excluded))
+
+    # Anti-hallucination check
+    valid_names = {s["name"] for s in top_for_analysis}
+    analysis, hallucinated = _validate_names(analysis, valid_names)
+    if hallucinated:
+        print(f"[trustmrr] ⚠️ Grok упомянул имена которых нет во входных: "
+              f"{hallucinated}", flush=True)
 
     # 4. Render + send
     report = render_report(analysis, total_count=len(main), excluded_count=len(excluded))
