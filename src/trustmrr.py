@@ -58,6 +58,25 @@ def _is_high_regulation(startup: dict) -> bool:
     return any(kw in haystack for kw in _HIGH_REG_KEYWORDS)
 
 
+def _coerce_number(v: Any) -> float:
+    """API может вернуть число, строку или dict с подполем. Берём что есть."""
+    if v is None:
+        return 0.0
+    if isinstance(v, (int, float)):
+        return float(v)
+    if isinstance(v, str):
+        try:
+            return float(v.replace(",", "").replace("$", "").replace("%", "").strip())
+        except ValueError:
+            return 0.0
+    if isinstance(v, dict):
+        # Пробуем популярные имена подполей по приоритету
+        for k in ("amount", "value", "current", "usd", "cents", "total", "monthly"):
+            if k in v:
+                return _coerce_number(v[k])
+    return 0.0
+
+
 def fetch_top_startups(limit: int = 100) -> list[dict]:
     """Получить топ N стартапов по revenue. API возвращает деньги в центах."""
     if not TRUSTMRR_API_KEY:
@@ -87,6 +106,15 @@ def fetch_top_startups(limit: int = 100) -> list[dict]:
         items = payload.get("data") or []
         if not items:
             break
+
+        # Один раз сбрасываем структуру первого item — поможет диагностировать
+        # любые будущие изменения схемы API без угадывания.
+        if page == 1 and items:
+            sample_keys = sorted(items[0].keys())
+            print(f"[trustmrr] sample item keys: {sample_keys}", flush=True)
+            print(f"[trustmrr] sample item (first 500 chars): "
+                  f"{json.dumps(items[0], ensure_ascii=False)[:500]}", flush=True)
+
         all_items.extend(items)
         meta = payload.get("meta") or {}
         if not meta.get("hasMore"):
@@ -97,22 +125,33 @@ def fetch_top_startups(limit: int = 100) -> list[dict]:
     # Нормализация: cents → USD, обрезка описания
     out = []
     for s in all_items[:limit]:
-        revenue_usd = (s.get("revenue") or 0) / 100
-        mrr_usd = (s.get("mrr") or s.get("revenue") or 0) / 100
-        growth = s.get("growth") or s.get("monthlyGrowthPct") or 0
-        try:
-            growth = float(growth)
-        except (TypeError, ValueError):
-            growth = 0.0
-        desc = (s.get("description") or "")[:200]
+        # Revenue/MRR могут быть числом, строкой или вложенным объектом —
+        # используем _coerce_number чтобы не падать
+        revenue_raw = _coerce_number(s.get("revenue"))
+        mrr_raw = _coerce_number(s.get("mrr")) or revenue_raw
+        # API документация говорит "values in USD cents", но если число
+        # уже выглядит маленьким (<10000), скорее всего это уже USD
+        revenue_usd = revenue_raw / 100 if revenue_raw > 10000 else revenue_raw
+        mrr_usd = mrr_raw / 100 if mrr_raw > 10000 else mrr_raw
+
+        growth = _coerce_number(
+            s.get("growth")
+            or s.get("monthlyGrowthPct")
+            or s.get("monthlyGrowth")
+            or s.get("mom")
+        )
+
+        desc = s.get("description") or s.get("tagline") or s.get("about") or ""
+        desc = str(desc)[:200]
+
         out.append({
-            "name": s.get("name") or "Unknown",
-            "category": s.get("category") or "",
+            "name": str(s.get("name") or s.get("title") or "Unknown"),
+            "category": str(s.get("category") or s.get("categoryName") or ""),
             "mrr": round(mrr_usd, 2),
             "revenue": round(revenue_usd, 2),
             "growth": round(growth, 2),
             "description": desc.strip(),
-            "on_sale": bool(s.get("onSale") or s.get("isForSale")),
+            "on_sale": bool(s.get("onSale") or s.get("isForSale") or s.get("for_sale")),
         })
     return out
 
