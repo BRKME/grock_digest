@@ -113,3 +113,7 @@
 {"ts": "2026-05-29T04:52:07.049498+00:00", "slot": "morning", "items_total": 35, "dropped_dedup": 0, "messages_sent": 4}
 {"ts": "2026-05-29T09:37:35.008244+00:00", "job": "trustmrr_weekly", "call": "grok", "model": "grok-4.3", "attempt": 0, "input_tokens": 4677, "output_tokens": 2835}
 {"ts": "2026-05-29T09:37:15.799787+00:00", "job": "trustmrr_weekly", "startups_total": 100, "startups_analyzed": 97, "startups_excluded": 3, "messages_sent": 1}
+{"ts": "2026-05-30T04:34:05.592306+00:00", "call": "A_news", "model": "grok-4.3", "attempt": 0, "input_tokens": 24739, "output_tokens": 4820, "cost_in_usd_ticks": 508777500}
+{"ts": "2026-05-30T04:34:38.057403+00:00", "call": "B_financial_bigtech", "model": "grok-4.3", "attempt": 0, "input_tokens": 21376, "output_tokens": 3532, "cost_in_usd_ticks": 609804000}
+{"ts": "2026-05-30T04:35:48.780833+00:00", "call": "C_thematic", "model": "grok-4.3", "attempt": 0, "input_tokens": 12113, "output_tokens": 5276, "cost_in_usd_ticks": 338960500}
+{"ts": "2026-05-30T04:33:08.952961+00:00", "slot": "morning", "items_total": 34, "dropped_dedup": 1, "messages_sent": 4}
