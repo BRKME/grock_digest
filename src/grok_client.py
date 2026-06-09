@@ -40,7 +40,7 @@ _ITEM_SCHEMA = {
 }
 
 
-def _bucket(items: int = 5) -> dict:
+def _bucket(items: int = 4) -> dict:
     return {"type": "array", "minItems": items, "maxItems": items, "items": _ITEM_SCHEMA}
 
 
@@ -52,7 +52,12 @@ SCHEMA_NEWS = {
 }
 
 def _financial_schema(third: str) -> dict:
-    """Третий бакет — bigtech или pharma — меняется день через день."""
+    """Третий бакет — bigtech или pharma — меняется день через день.
+    
+    Pharma остаётся 5 (жёсткое правило 3 США + 2 РФ/СНГ).
+    Bigtech и базовые бакеты — по 4 для качества и компактности.
+    """
+    third_items = 5 if third == "pharma" else 4
     return {
         "type": "object",
         "additionalProperties": False,
@@ -60,7 +65,7 @@ def _financial_schema(third: str) -> dict:
         "properties": {
             "crypto": _bucket(),
             "stocks": _bucket(),
-            third: _bucket(items=5),
+            third: _bucket(items=third_items),
         },
     }
 
@@ -83,17 +88,38 @@ SCHEMA_THEMATIC = {
 # ---------------------- SHARED RULES ----------------------
 
 _QUALITY_RULES = (
-    "Quality rules (MANDATORY):\n"
-    "- Maximum 1 item per source brand/account per bucket "
-    "  (no two items from the same X handle in the same bucket).\n"
-    "- Skip low-signal content: meme reposts of celebrity videos, fan-account "
-    "  reaction posts, generic cute/aesthetic content, simple PR photo dumps "
-    "  (e.g. 'team posted some good vibes photos'), giveaway/scam threads.\n"
-    "- Skip dangerous content: bioweapon creation/transmission how-to, "
-    "  terrorist attack glorification, child exploitation, doxxing, illegal "
-    "  drug/weapon marketplaces, technical instructions for harm.\n"
-    "- Skip NSFW and porn-bot spam.\n"
-    "- Each item must be a distinct STORY, not a slight variation of the same event.\n"
+    "Quality rules (MANDATORY — items violating these MUST be replaced):\n\n"
+    "1. NO DUPLICATE STORIES IN ONE BUCKET.\n"
+    "   If 3 of 5 items are about Apple Vision Pro from different angles "
+    "   (new app, screen recording feature, environment design) — keep ONLY "
+    "   the most newsworthy one, then find 3 different topics. Same applies "
+    "   to: Tesla/Musk daily news, single-company earnings spam, AI lab "
+    "   blog posts, single politician's statements. Each item = a clearly "
+    "   different sujet (different company OR different angle of broader trend).\n\n"
+    "2. NO FLUFF / NO META-NEWS.\n"
+    "   Each item MUST report a concrete event from last 24h: who did what, "
+    "   when, what changed. FORBIDDEN formulations:\n"
+    "   - 'X is under pressure / faces challenges / shows momentum'\n"
+    "   - 'Memes and discussions illustrate trend'\n"
+    "   - 'Experts debate / users are talking about / community reacts'\n"
+    "   - 'Y growing in popularity / gaining traction'\n"
+    "   These are NOT news — these are placeholders Grok fills when out of "
+    "   real material. If you can't find 4 real concrete events for the bucket, "
+    "   leave fewer items (the schema is min=max but expand search broader, "
+    "   never fill with fluff).\n\n"
+    "3. FACTUAL LANGUAGE, NOT INTERPRETATION.\n"
+    "   - GOOD: 'Дженсен Хуан в интервью CNBC сказал, что Qualcomm имеет "
+    "     долгосрочный потенциал. $QCOM вырос на 3% после комментария.'\n"
+    "   - BAD: 'Дженсен Хуан рекомендовал купить акции Qualcomm.'\n"
+    "   Don't promote a comment into a recommendation. Don't promote "
+    "   speculation into a fact. Quote-attribute when needed: "
+    "   'По словам X, ...', 'По данным Bloomberg/Reuters, ...'.\n\n"
+    "4. MAXIMUM 1 item per source account per bucket.\n\n"
+    "5. Skip low-signal content: meme reposts of celebrity videos, fan-account "
+    "   reactions, generic aesthetic content, PR photo dumps, giveaway/scam "
+    "   threads, NSFW/porn-bot spam.\n\n"
+    "6. Skip dangerous content: bioweapon how-to, terrorist glorification, "
+    "   child exploitation, doxxing, illegal drug/weapon markets.\n"
 )
 
 _RUSSIAN_OUTPUT_RULES = (
@@ -122,15 +148,19 @@ _SYSTEM_NEWS = (
 
 _USER_NEWS_TMPL = (
     "Найди:\n"
-    "- ru_top: топ-5 самых обсуждаемых тем в РУССКОЯЗЫЧНОМ X (lang:ru) за 24ч. "
-    "  Общая повестка: политика РФ, общество, культура, происшествия, экономика РФ.\n"
-    "- macro: топ-5 макро-событий, влияющих на рынки, за 24ч. "
-    "  Сюда входит: ФРС/Пауэлл, инфляция/CPI/PCE/jobs, госдолг США, "
-    "  торговые войны и тарифы, санкции, нефтяные шоки, геополитические "
-    "  события с прямым рыночным эффектом (oil/gas/Taiwan/Middle East). "
-    "  ИСКЛЮЧИ: движения отдельных тикеров (это в stocks), чисто крипто-новости "
-    "  (это в crypto).\n\n"
-    "Не более 1 темы с одного аккаунта в каждой корзине.\n"
+    "- ru_top: топ самых обсуждаемых тем в РУССКОЯЗЫЧНОМ X (lang:ru) за 24ч. "
+    "  Общая повестка: политика РФ, общество, культура, происшествия, экономика РФ. "
+    "  ВАЖНО: минимум 1-2 пункта из 4 — НЕ про военные действия / войну. "
+    "  Если в день много военных новостей — выбери САМОЕ важное одно военное "
+    "  событие, остальные слоты заполни не-военными темами: бизнес, наука, "
+    "  технологии, культура, общество, происшествия не связанные с фронтом.\n"
+    "- macro: топ макро-событий, влияющих на рынки, за 24ч. ГЛОБАЛЬНО, не "
+    "  только США. Сюда входит: ФРС/Пауэлл, ЕЦБ/Лагард, Банк России, Банк "
+    "  Японии, Банк Англии, Народный банк Китая, инфляция/CPI любых стран "
+    "  G10, госдолг США/ЕС, торговые войны и тарифы, санкции, нефтяные шоки, "
+    "  геополитические события с рыночным эффектом (Taiwan/Middle East). "
+    "  Не больше 2 пунктов из 4 про США. ИСКЛЮЧИ: движения отдельных тикеров "
+    "  (это в stocks), чисто крипто-новости (это в crypto).\n\n"
     "Ранжируй по реальной вовлечённости (просмотры + репосты + ответы), "
     "а не по громкости заголовка.\n\n"
     "ИСКЛЮЧИ темы, чьи нормализованные хэши уже в этом списке (были в "
