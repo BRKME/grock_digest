@@ -40,7 +40,7 @@ _ITEM_SCHEMA = {
 }
 
 
-def _bucket(items: int = 4) -> dict:
+def _bucket(items: int = 3) -> dict:
     return {"type": "array", "minItems": items, "maxItems": items, "items": _ITEM_SCHEMA}
 
 
@@ -57,7 +57,7 @@ def _financial_schema(third: str) -> dict:
     Pharma остаётся 5 (жёсткое правило 3 США + 2 РФ/СНГ).
     Bigtech и базовые бакеты — по 4 для качества и компактности.
     """
-    third_items = 5 if third == "pharma" else 4
+    third_items = 5 if third == "pharma" else 3
     return {
         "type": "object",
         "additionalProperties": False,
