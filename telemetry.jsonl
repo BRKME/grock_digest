@@ -173,3 +173,5 @@
 {"ts": "2026-06-12T05:13:20.876876+00:00", "slot": "morning", "items_total": 23, "dropped_dedup": 0, "messages_sent": 4}
 {"ts": "2026-06-12T09:58:09.197179+00:00", "job": "trustmrr_weekly", "call": "grok", "model": "grok-4.3", "attempt": 0, "input_tokens": 4786, "output_tokens": 2315}
 {"ts": "2026-06-12T09:57:34.369694+00:00", "job": "trustmrr_weekly", "startups_total": 100, "startups_analyzed": 98, "startups_excluded": 2, "messages_sent": 1}
+{"ts": "2026-06-20T08:40:19.883919+00:00", "job": "pet_trends_weekly", "call": "grok", "model": "grok-4.3", "attempt": 0, "input_tokens": 35930, "output_tokens": 3029, "cost_in_usd_ticks": 695426000}
+{"ts": "2026-06-20T08:39:59.358140+00:00", "job": "pet_trends_weekly", "messages_sent": 2, "total_chars": 4472}
