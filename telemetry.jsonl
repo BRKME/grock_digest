@@ -175,3 +175,7 @@
 {"ts": "2026-06-12T09:57:34.369694+00:00", "job": "trustmrr_weekly", "startups_total": 100, "startups_analyzed": 98, "startups_excluded": 2, "messages_sent": 1}
 {"ts": "2026-06-20T08:40:19.883919+00:00", "job": "pet_trends_weekly", "call": "grok", "model": "grok-4.3", "attempt": 0, "input_tokens": 35930, "output_tokens": 3029, "cost_in_usd_ticks": 695426000}
 {"ts": "2026-06-20T08:39:59.358140+00:00", "job": "pet_trends_weekly", "messages_sent": 2, "total_chars": 4472}
+{"ts": "2026-06-21T05:25:20.129659+00:00", "call": "A_news", "model": "grok-4.3", "attempt": 0, "input_tokens": 15452, "output_tokens": 5586, "cost_in_usd_ticks": 503904000}
+{"ts": "2026-06-21T05:25:47.706511+00:00", "call": "B_financial_bigtech", "model": "grok-4.3", "attempt": 0, "input_tokens": 21963, "output_tokens": 3726, "cost_in_usd_ticks": 638791500}
+{"ts": "2026-06-21T05:26:11.867398+00:00", "call": "C_thematic", "model": "grok-4.3", "attempt": 0, "input_tokens": 19139, "output_tokens": 3472, "cost_in_usd_ticks": 588677500}
+{"ts": "2026-06-21T05:24:30.359714+00:00", "slot": "morning", "items_total": 21, "dropped_dedup": 0, "messages_sent": 4}
