@@ -1,9 +1,10 @@
 name: trustmrr-weekly
 
 on:
-  schedule:
-    # Пятница 06:00 UTC = 09:00 MSK (с учётом задержки GH Actions ~10-12 MSK)
-    - cron: "0 6 * * 5"
+  # Schedule отключён 27.06.2026 — отчёт не приносил ценности.
+  # Можно вернуть автозапуск, раскомментировав строку ниже.
+  # schedule:
+  #   - cron: "0 6 * * 5"
   workflow_dispatch: {}
 
 permissions:
