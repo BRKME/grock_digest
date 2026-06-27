@@ -209,3 +209,5 @@
 {"ts": "2026-06-27T04:34:33.192844+00:00", "call": "B_financial_bigtech", "model": "grok-4.3", "attempt": 0, "input_tokens": 22284, "output_tokens": 5289, "cost_in_usd_ticks": 675159000}
 {"ts": "2026-06-27T04:35:05.669614+00:00", "call": "C_thematic", "model": "grok-4.3", "attempt": 0, "input_tokens": 15032, "output_tokens": 2931, "cost_in_usd_ticks": 426231000}
 {"ts": "2026-06-27T04:33:04.606540+00:00", "slot": "morning", "items_total": 21, "dropped_dedup": 0, "messages_sent": 4}
+{"ts": "2026-06-27T08:25:49.795168+00:00", "job": "pet_trends_weekly", "call": "grok", "model": "grok-4.3", "attempt": 0, "input_tokens": 42488, "output_tokens": 2282, "cost_in_usd_ticks": 741926000}
+{"ts": "2026-06-27T08:25:30.449994+00:00", "job": "pet_trends_weekly", "messages_sent": 1, "total_chars": 3525}
