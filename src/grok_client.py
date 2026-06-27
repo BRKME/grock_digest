@@ -40,7 +40,7 @@ _ITEM_SCHEMA = {
 }
 
 
-def _bucket(items: int = 3) -> dict:
+def _bucket(items: int = 2) -> dict:
     return {"type": "array", "minItems": items, "maxItems": items, "items": _ITEM_SCHEMA}
 
 
