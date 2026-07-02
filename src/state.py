@@ -36,3 +36,30 @@ def save_seen_hashes(all_hashes: list[str]) -> None:
         "updated_at": now,
     }
     STATE_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def merge_and_save(new_hashes: list[str]) -> None:
+    """Добавить новые хэши, СОХРАНИВ оригинальные t у старых.
+
+    Прежний save_seen_hashes штамповал все записи свежим t=now — окно 48ч
+    никогда не истекало (219 хэшей с одним timestamp на 02.07), список рос
+    вечно, повторяющиеся темы банились навсегда. Здесь: старые записи
+    переживают save с исходным t и умирают по расписанию; t=now получают
+    только новые."""
+    now = int(time.time())
+    old: dict[str, int] = {}
+    if STATE_PATH.exists():
+        try:
+            data = json.loads(STATE_PATH.read_text(encoding="utf-8"))
+            for rec in data.get("seen", []):
+                if isinstance(rec, dict) and now - rec.get("t", 0) < WINDOW_SECONDS:
+                    old[rec["h"]] = rec["t"]
+        except json.JSONDecodeError:
+            pass
+    for h in new_hashes:
+        old.setdefault(h, now)          # новый хэш; существующий хранит свой t
+    payload = {
+        "seen": [{"h": h, "t": t} for h, t in old.items()],
+        "updated_at": now,
+    }
+    STATE_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")

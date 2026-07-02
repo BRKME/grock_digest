@@ -34,10 +34,17 @@ def run(slot: str) -> None:
 
     fin_keys = _BASE_KEYS_FIN + (third,)
 
-    # дедуп против последних 48ч
+    # дедуп против последних 48ч (точный, по хэшам из state)
     news, dropped_a = dedup.filter_seen(news, seen, keys=_ALL_KEYS_NEWS)
     financial, dropped_b = dedup.filter_seen(financial, seen, keys=fin_keys)
     thematic, dropped_c = dedup.filter_seen(thematic, seen, keys=_ALL_KEYS_THEM)
+
+    # почти-дубли внутри прогона (Jaccard ≥0.8): одна история в двух корзинах
+    # с перефразом хэшем не ловится; kept_norms общий на все три payload'а
+    _norms: list[str] = []
+    news, dropped_d = dedup.filter_near_dups_within(news, _ALL_KEYS_NEWS, _norms)
+    financial, dropped_e = dedup.filter_near_dups_within(financial, fin_keys, _norms)
+    thematic, dropped_f = dedup.filter_near_dups_within(thematic, _ALL_KEYS_THEM, _norms)
 
     # сортировка по score desc
     news = _sort_buckets(news, _ALL_KEYS_NEWS)
@@ -52,12 +59,13 @@ def run(slot: str) -> None:
 
     # обновление state и телеметрии
     new_hashes = dedup.collect_hashes(news, financial, thematic)
-    state.save_seen_hashes(seen + new_hashes)
+    state.merge_and_save(new_hashes)   # старые t сохраняются — окно 48ч реальное
     telemetry.write({
         "ts": started.isoformat(),
         "slot": slot,
         "items_total": len(new_hashes),
         "dropped_dedup": dropped_a + dropped_b + dropped_c,
+        "dropped_near_dup": dropped_d + dropped_e + dropped_f,
         "messages_sent": len(msgs),
     })
 
