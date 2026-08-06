@@ -307,3 +307,5 @@
 {"ts": "2026-08-06T03:49:27.140594+00:00", "call": "B_financial_bigtech", "model": "grok-4.3", "attempt": 0, "input_tokens": 21790, "output_tokens": 2323, "cost_in_usd_ticks": 477090000}
 {"ts": "2026-08-06T03:49:56.272652+00:00", "call": "C_thematic", "model": "grok-4.3", "attempt": 0, "input_tokens": 11661, "output_tokens": 2333, "cost_in_usd_ticks": 368471500}
 {"ts": "2026-08-06T03:48:13.113782+00:00", "slot": "morning", "items_total": 8, "dropped_dedup": 0, "dropped_near_dup": 0, "messages_sent": 4}
+{"ts": "2026-08-06T08:48:09.566682+00:00", "job": "consumer_trends_weekly", "call": "grok", "model": "grok-4.3", "attempt": 0, "input_tokens": 26882, "output_tokens": 3375}
+{"ts": "2026-08-06T08:47:32.232934+00:00", "job": "consumer_trends_weekly", "trends_count": 3, "messages_sent": 1}
