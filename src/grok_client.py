@@ -33,8 +33,20 @@ _ITEM_SCHEMA = {
     "additionalProperties": False,
     "required": ["title", "summary", "score"],
     "properties": {
-        "title": {"type": "string", "maxLength": 140},
-        "summary": {"type": "string", "maxLength": 320},
+        "title": {
+            "type": "string",
+            "maxLength": 140,
+            "description": "Что произошло — законченное утверждение с "
+                           "действующим лицом и действием. Не тема, не вопрос.",
+        },
+        "summary": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "2-3 предложения: (1) суть события с конкретикой — "
+                           "цифры, имена, суммы, даты; (2) контекст — почему это "
+                           "важно, что было до, что будет дальше. Читатель не "
+                           "видел исходный пост и не знает предыстории.",
+        },
         "score": {"type": "integer", "minimum": 0},
     },
 }
@@ -105,7 +117,34 @@ _QUALITY_RULES = (
     "   Don't promote a comment into a recommendation. Don't promote "
     "   speculation into a fact. Quote-attribute when needed: "
     "   'По словам X, ...', 'По данным Bloomberg/Reuters, ...'.\n\n"
-    "4. DIFFERENT SOURCES PER BUCKET.\n"
+    "3b. SELF-SUFFICIENT ITEM — EVERY ITEM MUST STAND ALONE.\n"
+    "   The reader has NOT seen the original post and knows no backstory. "
+    "   Each item must answer: WHO did WHAT, WHEN, and WHY IT MATTERS.\n"
+    "   Mandatory specifics where they exist: numbers, sums, percentages, "
+    "   names, places, dates, outcomes.\n"
+    "   - BAD: 'Ночью на Лубянке произошёл конфликт между молодыми людьми. "
+    "     Видео разошлось.' (no event, no outcome, no reason it is news)\n"
+    "   - BAD: 'Bloomberg сообщил, что прибыль растёт быстрее цен акций.' "
+    "     (no numbers, no period, no takeaway)\n"
+    "   - GOOD: 'Прибыль компаний S&P 500 во II квартале выросла на 11% "
+    "     год к году, тогда как индекс прибавил 4% — разрыв максимальный "
+    "     с 2021 года (Bloomberg). Это снижает мультипликатор P/E рынка.'\n"
+    "   If you cannot find enough facts to make an item self-sufficient, "
+    "   pick a different story — do not publish a hollow one.\n\n"
+    "3c. CLAIMS ARE NOT FACTS.\n"
+    "   When an item is somebody's statement, accusation or forecast rather "
+    "   than an established fact, say so explicitly AND add the counter-context "
+    "   in the same summary: what official bodies, data or the opposing side say.\n"
+    "   This is mandatory for claims about health, medicine, vaccines, science, "
+    "   crime and election integrity.\n"
+    "   - BAD: 'Сенатор заявил, что FDA проигнорировала вред вакцин, сотни "
+    "     тысяч получили инвалидность или погибли.' (contested claim relayed "
+    "     as if it were reporting)\n"
+    "   - GOOD: 'Сенатор X на слушаниях заявил, что FDA скрыла данные о вреде "
+    "     COVID-вакцин. FDA такие выводы отвергает, крупные исследования "
+    "     подобной связи не показывают — это позиция сенатора, а не "
+    "     установленный факт.'\n"
+    "   Never launder a contested claim into a neutral-sounding headline.\n\n"    "4. DIFFERENT SOURCES PER BUCKET.\n"
     "   Maximum 1 item per source account AND per primary publication.\n"
     "   If both candidate items cite the same outlet (e.g. both from "
     "   'Новая газета Европа', both from Bloomberg, both from The Kobeissi "
