@@ -2,8 +2,9 @@ name: digest
 
 on:
   schedule:
-    # 00:30 UTC = 03:30 MSK (с учётом задержки GH Actions приходит ~04:30-06 MSK)
-    - cron: "30 0 * * *"
+    # Пн-Пт, 00:30 UTC = 03:30 MSK (с учётом задержки GH Actions ~04:30-06 MSK).
+    # В выходные не шлём — 1-5 это пн-пт.
+    - cron: "30 0 * * 1-5"
   workflow_dispatch: {}
 
 permissions:
