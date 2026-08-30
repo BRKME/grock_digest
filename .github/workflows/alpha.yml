@@ -2,8 +2,8 @@ name: alpha-weekly
 
 on:
   schedule:
-    # Воскресенье 06:00 UTC = 09:00 MSK
-    - cron: "0 6 * * 0"
+    # Понедельник 06:00 UTC = 09:00 MSK (перенесено с воскресенья)
+    - cron: "0 6 * * 1"
   workflow_dispatch: {}
 
 permissions:

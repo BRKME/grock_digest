@@ -2,8 +2,8 @@ name: pet-trends-weekly
 
 on:
   schedule:
-    # Суббота 06:00 UTC = 09:00 MSK
-    - cron: "0 6 * * 6"
+    # Вторник 06:00 UTC = 09:00 MSK (перенесено с субботы)
+    - cron: "0 6 * * 2"
   workflow_dispatch: {}
 
 permissions:
