@@ -409,3 +409,7 @@
 {"ts": "2026-09-10T04:58:08.664290+00:00", "slot": "morning", "items_total": 8, "dropped_dedup": 0, "dropped_near_dup": 0, "messages_sent": 4}
 {"ts": "2026-09-10T11:04:00.401570+00:00", "job": "consumer_trends_weekly", "call": "grok", "model": "grok-4.3", "attempt": 0, "input_tokens": 26331, "output_tokens": 3547}
 {"ts": "2026-09-10T11:03:23.165537+00:00", "job": "consumer_trends_weekly", "trends_count": 3, "messages_sent": 1}
+{"ts": "2026-09-11T04:55:37.109478+00:00", "call": "A_news", "model": "grok-4.3", "attempt": 0, "input_tokens": 13984, "output_tokens": 2635, "cost_in_usd_ticks": 351027000}
+{"ts": "2026-09-11T04:55:55.527465+00:00", "call": "B_financial_bigtech", "model": "grok-4.3", "attempt": 0, "input_tokens": 19312, "output_tokens": 2402, "cost_in_usd_ticks": 559786000}
+{"ts": "2026-09-11T04:56:23.108958+00:00", "call": "C_thematic", "model": "grok-4.3", "attempt": 0, "input_tokens": 16905, "output_tokens": 3763, "cost_in_usd_ticks": 464395500}
+{"ts": "2026-09-11T04:55:21.691663+00:00", "slot": "morning", "items_total": 8, "dropped_dedup": 0, "dropped_near_dup": 0, "messages_sent": 4}
