@@ -443,3 +443,7 @@
 {"ts": "2026-09-23T04:57:20.615258+00:00", "call": "B_financial_bigtech", "model": "grok-4.3", "attempt": 0, "input_tokens": 19256, "output_tokens": 2873, "cost_in_usd_ticks": 1672205000}
 {"ts": "2026-09-23T04:57:48.557366+00:00", "call": "C_thematic", "model": "grok-4.3", "attempt": 0, "input_tokens": 18711, "output_tokens": 2995, "cost_in_usd_ticks": 1769114500}
 {"ts": "2026-09-23T04:56:16.805158+00:00", "slot": "morning", "items_total": 8, "dropped_dedup": 0, "dropped_near_dup": 0, "messages_sent": 4}
+{"ts": "2026-09-24T05:06:41.228274+00:00", "call": "A_news", "model": "grok-4.3", "attempt": 0, "input_tokens": 29297, "output_tokens": 2247, "cost_in_usd_ticks": 1925891500}
+{"ts": "2026-09-24T05:06:59.523069+00:00", "call": "B_financial_pharma", "model": "grok-4.3", "attempt": 0, "input_tokens": 18142, "output_tokens": 1994, "cost_in_usd_ticks": 1684961000}
+{"ts": "2026-09-24T05:07:23.293298+00:00", "call": "C_thematic", "model": "grok-4.3", "attempt": 0, "input_tokens": 17251, "output_tokens": 2777, "cost_in_usd_ticks": 1194070500}
+{"ts": "2026-09-24T05:06:14.667351+00:00", "slot": "morning", "items_total": 8, "dropped_dedup": 0, "dropped_near_dup": 0, "messages_sent": 4}
