@@ -349,8 +349,23 @@ def run() -> None:
     })
 
 
+def _should_run_today() -> bool:
+    """Отчёт раз в две недели — по чётным ISO-неделям.
+    Ручной запуск (workflow_dispatch) ставит FORCE_RUN=1 и проходит всегда."""
+    if os.environ.get("FORCE_RUN"):
+        return True
+    week = datetime.now(timezone.utc).isocalendar()[1]
+    if week % 2 != 0:
+        print(f"[consumer_trends] ISO-неделя {week} нечётная — пропускаем "
+              f"(отчёт раз в две недели)", flush=True)
+        return False
+    return True
+
+
 def main() -> int:
     try:
+        if not _should_run_today():
+            return 0
         run()
         return 0
     except Exception:

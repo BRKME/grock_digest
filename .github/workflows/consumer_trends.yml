@@ -2,7 +2,8 @@ name: consumer-trends-weekly
 
 on:
   schedule:
-    # Четверг 06:00 UTC = 09:00 MSK (с учётом задержки GH Actions ~10-12 MSK)
+    # Четверг 06:00 UTC = 09:00 MSK. Скрипт сам отсеивает
+    # нечётные ISO-недели, поэтому фактически отчёт выходит раз в две недели.
     - cron: "0 6 * * 4"
   workflow_dispatch: {}
 
@@ -25,6 +26,7 @@ jobs:
       GROK_MODEL_PRIMARY: grok-4.3
       GROK_MODEL_FALLBACK: grok-4.20-non-reasoning
       GROK_REASONING_EFFORT: medium
+      FORCE_RUN: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
 
     steps:
       - uses: actions/checkout@v4
