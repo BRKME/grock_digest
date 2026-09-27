@@ -11,7 +11,7 @@ from . import grok_client, dedup, state, render, telegram_sender, telemetry
 # ключи всех корзин — для дедупа и сбора хэшей
 _ALL_KEYS_NEWS = ("ru_top", "macro")
 _BASE_KEYS_FIN = ("crypto", "stocks")  # третий бакет (bigtech/pharma) добавляется в runtime
-_ALL_KEYS_THEM = ("sports", "ai")
+_ALL_KEYS_THEM = ("ai",)
 
 
 def _sort_buckets(payload: dict, keys: tuple[str, ...]) -> dict:

@@ -4,7 +4,7 @@
 1. header + Топ RU
 2. Macro + Crypto
 3. Stocks + Big Tech
-4. Sports + AI
+4. AI
 """
 from __future__ import annotations
 
@@ -88,7 +88,7 @@ def render_digest(
         "digest_part1.html.j2",   # header + ru_top
         "digest_part2.html.j2",   # macro + crypto
         "digest_part3.html.j2",   # stocks + third (bigtech/pharma)
-        "digest_part4.html.j2",   # sports + ai
+        "digest_part4.html.j2",   # ai
     ):
         msg = env.get_template(tpl).render(**base_ctx).strip()
         if not msg:

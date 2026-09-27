@@ -2,7 +2,7 @@
 
 1. call_news       → ru_top + macro
 2. call_financial  → crypto + stocks + bigtech
-3. call_thematic   → sports + ai
+3. call_thematic   → ai
 
 Использует Responses API + серверный тул x_search.
 """
@@ -83,8 +83,8 @@ def _financial_schema(third: str) -> dict:
 SCHEMA_THEMATIC = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["sports", "ai"],
-    "properties": {"sports": _bucket(), "ai": _bucket()},
+    "required": ["ai"],
+    "properties": {"ai": _bucket()},
 }
 
 
@@ -290,7 +290,7 @@ def pick_third_bucket() -> tuple[str, str]:
         return "pharma", _USER_FIN_TMPL_PHARMA
 
 _SYSTEM_THEM = (
-    "You are a sports & AI trends analyst for a Russian-language Telegram channel. "
+    "You are an AI industry trends analyst for a Russian-language Telegram channel. "
     "Use the x_search tool to find top trends on X in the last 24 hours.\n\n"
     + _QUALITY_RULES
     + "\n"
@@ -300,25 +300,6 @@ _SYSTEM_THEM = (
 
 _USER_THEM_TMPL = (
     "Дай топ-5 тем за 24ч на X в каждой категории:\n\n"
-    "- sports: любой спорт КРОМЕ американского футбола (NFL и college football), "
-    "  гольфа и водных видов (плавание, сёрфинг, парусный спорт, водное поло). "
-    "  Можно: футбол (soccer), баскетбол (NBA/EuroLeague), теннис, F1/MotoGP, "
-    "  MMA/UFC/бокс, хоккей (NHL/KHL), киберспорт, олимпийские виды.\n"
-    "  ПРИОРИТЕТ МЕЙДЖОРАМ: если в это время идёт крупный турнир — "
-    "  FIFA World Cup, UEFA EURO, Olympics, Champions League knockout, "
-    "  NBA Finals, Stanley Cup Finals, Grand Slam tennis — единственный пункт "
-    "  корзины должен быть про этот турнир: ключевой матч, результат, "
-    "  рекорд или сенсация. Не сваливай весь тур в строку 'результаты тура'.\n"
-    "  В это время ИГНОРИРУЙ: товарищеские матчи сборных, второстепенные "
-    "  лиги, индивидуальные награды не связанные с мейджором.\n"
-    "  Приоритет — конкретные матчи, результаты, трансферы, награды. "
-    "  ИСКЛЮЧИ: PR-фото клубов без новостной нагрузки, видео-нарезки "
-    "  'best moments', fan-account reactions без подтверждённого факта, "
-    "  ТОВАРИЩЕСКИЕ И ТРЕНИРОВОЧНЫЕ матчи клубов (предсезонка, спарринги), "
-    "  МЕТА-СТАТЬИ изданий — рейтинги, грейдинги трансферов, power rankings, "
-    "  'кто лучше провёл окно' (это мнение редакции, а не событие).\n"
-    "  Берём только: официальные матчи, ЗАВЕРШЁННЫЕ трансферы с суммой, "
-    "  награды, серьёзные травмы звёзд, рекорды, дисквалификации.\n"
     "- ai: AI/ML индустрия — релизы моделей (GPT/Claude/Gemini/Llama/etc), "
     "  анонсы лабораторий (OpenAI/Anthropic/Google DeepMind/xAI/Meta AI), "
     "  AI-исследования и статьи, AI-продукты и интеграции, "
